@@ -1,0 +1,376 @@
+-- "5", Autumn, 2024
+-- Name: Peeranont Dongpakkij ,E-mail: Peeranont.Dongpakkij@student.uts.edu.au, StudentID: 24666594
+
+-- This database is created by the working process of the Asian food distribution company names "super food service" (made-up name). 
+-- The entity-relationship is similar to the company I worked, but the record is not actual data.
+-- The product names refer to this website: https://bestfoodservice.com.au/home.
+
+-- How database application works 
+-- The process starts with restaurants ordering the products that come from the warehouse.
+-- When the staff finishes picking up the products in each order, the order will get together in one run. 
+-- Run means ways to deliver products to restaurants that can be more than one restaurant.
+-- The driver and sales staff are assigned to check and deliver the product in their runs.
+-- The delivery can go more than one run if some runs are near.
+-- The truck can have more than one person, but in practice, salestaffs do not go to deliver products with drivers.
+-- This company is a family business, so they do not have many trucks, but different sizes depending on how many orders are in a day.
+-- The supplier will come to fill products if any product is in shortage. 
+
+DROP table restaurants CASCADE;
+DROP table orders CASCADE;
+DROP table runs CASCADE;
+DROP table orderlines CASCADE;
+DROP table products CASCADE;
+DROP table staffs CASCADE;
+DROP table trucks CASCADE;
+DROP table supplylist CASCADE;
+DROP table suppliers CASCADE;
+
+
+CREATE TABLE restaurants
+(
+    resNo    INTEGER NOT NULL,
+    resName  TEXT NOT NULL,
+    address  TEXT NOT NULL,
+    resTel  VARCHAR(20) NOT NULL, --Check
+    resEmail VARCHAR(50), --Check
+    
+    CONSTRAINT restaurantsPK PRIMARY KEY (resNo),
+    
+    CONSTRAINT di_table_restaurants_resTel CHECK (
+                    resTel ~ '^\d{2}-\d{4}-\d{4}$'), -- Regular Expression
+    
+    CONSTRAINT di_table_restaurants_resEmail CHECK (
+                    resEmail LIKE '%@%')
+);
+
+INSERT INTO restaurants VALUES(1, 'Glorious Bar and Grill', '21  Ocean Street', '02-8091-5086','ABC@gmail.com');
+INSERT INTO restaurants VALUES(2, 'Ruby Blossom Bistro', '1A Somerset Ave', '02-4648-2130','BCD@gmail.com');
+INSERT INTO restaurants VALUES(3, 'Elephant Lounge', '1 Bulletin Pl', '02-9251-4044','CDE@gmail.com');
+INSERT INTO restaurants VALUES(4, 'Pure Wave Farmhouse', '1 Wallis St', '02-9580-2365','DEF@gmail.com');
+INSERT INTO restaurants VALUES(5, 'Crazy Tractor Bistro', '59 Kinghorne St', '02-9566-2112','EFG@gmail.com');
+INSERT INTO restaurants VALUES(6, 'Avid Wagon Inn', '69 Sydney Rd', '02-4344-5599','FGH@gmail.com');
+INSERT INTO restaurants VALUES(7, 'Midnight Cat Pub', '86 Vincent St', '02-9597-1595','GHI@gmail.com');
+INSERT INTO restaurants VALUES(8, 'Shining Horizon Eats', '228 Auburn St', '02-9388-9660','HIJ@gmail.com');
+INSERT INTO restaurants VALUES(9, 'Aster and Hen Cuisine', '45 Thompson St', '02-9557-4455','IJK@gmail.com');
+INSERT INTO restaurants VALUES(10, 'Citron Platter Kitchen', '178 Leura Mall', '02-9648-1400','JKL@gmail.com');
+
+CREATE TABLE  trucks
+(
+    truckNo   INTEGER NOT NULL,
+    licensePlate VARCHAR(10) NOT NULL,
+    size  char(1) NOT NULL,
+    
+    CONSTRAINT trucksPK PRIMARY KEY (truckNo),
+    
+    CONSTRAINT di_table_trucks_licensePlate CHECK (
+               licensePlate ~ '^[A-Z]{2}[0-9]{2}[A-Z]{2}$'), --Regular Expression
+               
+    CONSTRAINT di_table_trucks_size CHECK (
+                size IN ('S', 'M', 'L'))
+);
+
+INSERT INTO trucks VALUES(1, 'GT36HI', 'S');
+INSERT INTO trucks VALUES(2, 'FK29DA', 'S');
+INSERT INTO trucks VALUES(3, 'EA34CP', 'S');
+INSERT INTO trucks VALUES(4, 'AI46NE', 'S');
+INSERT INTO trucks VALUES(5, 'TR22GI', 'M');
+INSERT INTO trucks VALUES(6, 'ER69PO', 'M');
+INSERT INTO trucks VALUES(7, 'UW21KJ', 'M');
+INSERT INTO trucks VALUES(8, 'EH56MU', 'L');
+INSERT INTO trucks VALUES(9, 'MO55SU', 'L');
+INSERT INTO trucks VALUES(10, 'FS32DM', 'L');
+
+CREATE TABLE runs
+(
+    runNo    INTEGER NOT NULL,
+    truckNo  INTEGER NOT NULL, --Foreign Key
+    note     TEXT,
+    
+    CONSTRAINT runsPK PRIMARY KEY (runNo),
+    
+    CONSTRAINT runsFK_truck FOREIGN KEY (truckNo) REFERENCES trucks
+);
+
+INSERT INTO runs VALUES(19, 4, 'Narrow street');
+INSERT INTO runs VALUES(21, 9, 'Steep delivery way');
+INSERT INTO runs VALUES(24, 10, 'Limited time parking');
+INSERT INTO runs VALUES(27, 6, '');
+INSERT INTO runs VALUES(31, 6, '');
+INSERT INTO runs VALUES(32, 2, 'Deliver before 5pm');
+
+
+CREATE TABLE orders
+(
+    orderNo    INTEGER NOT NULL,
+    resNo      INTEGER NOT NULL, --Foreign
+    orderDate  date NOT NULL,
+    deliverDate date NOT NULL,
+    runNo INTEGER NOT NULL, --Foreign
+    
+    CONSTRAINT ordersPK PRIMARY KEY (orderNo),
+    
+    CONSTRAINT ordersFK_res FOREIGN KEY (resNo) REFERENCES restaurants,
+    CONSTRAINT ordersFK_run FOREIGN KEY (runNo) REFERENCES runs ON DELETE RESTRICT
+                                                     
+);
+
+INSERT INTO orders VALUES(1, 3, '2024-04-25', '2024-04-26', 19);
+INSERT INTO orders VALUES(2, 5, '2024-04-26', '2024-04-30', 19);
+INSERT INTO orders VALUES(3, 4, '2024-04-26', '2024-04-30', 21);
+INSERT INTO orders VALUES(4, 6, '2024-04-26', '2024-05-01', 27);
+INSERT INTO orders VALUES(5, 7, '2024-04-29', '2024-05-02', 24);
+INSERT INTO orders VALUES(6, 8, '2024-04-29', '2024-05-02', 24);
+INSERT INTO orders VALUES(7, 6, '2024-04-30', '2024-05-03', 27);
+INSERT INTO orders VALUES(8, 5, '2024-04-30', '2024-05-03', 27);
+INSERT INTO orders VALUES(9, 1, '2024-04-30', '2024-05-06', 31);
+INSERT INTO orders VALUES(10, 2, '2024-05-01', '2024-05-06', 31);
+INSERT INTO orders VALUES(11, 10, '2024-05-02', '2024-05-06', 32);
+INSERT INTO orders VALUES(12, 4, '2024-05-03', '2024-05-07', 21);
+INSERT INTO orders VALUES(13, 9, '2024-05-06', '2024-05-07', 32);
+INSERT INTO orders VALUES(14, 7, '2024-05-06', '2024-05-08', 24);
+INSERT INTO orders VALUES(15, 2, '2024-05-07', '2024-05-08', 31);
+INSERT INTO orders VALUES(16, 6, '2024-05-07', '2024-05-08', 27);
+INSERT INTO orders VALUES(17, 7, '2024-05-08', '2024-05-09', 24);
+INSERT INTO orders VALUES(18, 7, '2024-05-08', '2024-05-09', 24);
+INSERT INTO orders VALUES(19, 9, '2024-05-09', '2024-05-10', 32);
+INSERT INTO orders VALUES(20, 5, '2024-04-09', '2024-05-10', 19);
+
+CREATE TABLE products
+(
+    productNo   INTEGER NOT NULL,
+    productName TEXT NOT NULL, 
+    productType  char(2) NOT NULL,
+    unitQuantity  INTEGER NOT NULL,
+    unitPrice   decimal(10,2) NOT NULL,
+    
+    CONSTRAINT productsPK PRIMARY KEY (productNo),
+    
+    CONSTRAINT di_table_productType_size CHECK (
+                productType IN ('WH', 'FZ')) -- WH = Normal Product, FZ = Frozen Product 
+);
+
+INSERT INTO products VALUES(1, 'VEGETABLE OIL FARMER 20LT', 'WH', 16, 80.50);
+INSERT INTO products VALUES(2, 'PAT CHUN VINEGAR SAUCE (SWEETENED) 4.8LT', 'WH', 47, 51.90 );
+INSERT INTO products VALUES(3, 'STRAW MUSHROOM "SELECTED TASTE" (S) 425GM X 12', 'WH', 48, 38.40);
+INSERT INTO products VALUES(4, 'WHEATEN CORNFLOUR "MANLIDRA"', 'WH',39, 37.10);
+INSERT INTO products VALUES(5, 'MEGACHEF SOY SAUCE (GLUTEN FREE) 4.5L', 'WH', 36, 59.90 );
+INSERT INTO products VALUES(6, 'FISH SAUCE COOK&LOBSTER 4.5LT', 'WH',38,32.90);
+INSERT INTO products VALUES(7, 'HOM MALI (JASMINE) RICE KING FARMER 20KG ', 'WH', 20,45.05);
+INSERT INTO products VALUES(8, 'VEGETABLE OIL FARMER 15LT(CARTON)', 'WH', 10, 57.30);
+INSERT INTO products VALUES(9, 'GREEN CURRY PASTE MS 1KG X 12', 'WH', 27, 29.45);
+INSERT INTO products VALUES(10, 'BAMBOO STRIP FAF 2.95KG X 6', 'WH', 18, 32.35);
+INSERT INTO products VALUES(11, 'SWEETENED CONDENSED MILK  395GM X 12', 'WH', 16, 24.15);
+INSERT INTO products VALUES(12, 'CANOLA OIL SUN SCENE 20LT', 'WH', 11, 75.80);
+INSERT INTO products VALUES(13, 'DETERGENT 25LT', 'WH', 10, 72.30);
+INSERT INTO products VALUES(14, 'BROWN SUGAR "BUNDABERG" 25KG', 'WH', 17, 40.05);
+INSERT INTO products VALUES(15, 'PLASTIC WHITE BOWLS BASE + LID L1050 (400PCS) LUCKY BRAND', 'WH', 48, 40.20);
+INSERT INTO products VALUES(16, '"GRADED" SUGAR 25KG "BUNDABERG"', 'WH', 11, 43.20);
+INSERT INTO products VALUES(17, 'COCONUT CREAM KARA 1LT X 6', 'WH', 12, 30.20);
+INSERT INTO products VALUES(18, 'AWASESU SUSHI SEASONING HANAMARU 18LT', 'WH', 35, 65.65);
+INSERT INTO products VALUES(19, 'PAT CHUN BLACK RICE VINEGAR (UNSWEETENED) 600ML X 6', 'WH', 47, 63.95);
+INSERT INTO products VALUES(20, 'PEANUT WITH SKIN 25KG', 'WH', 24, 42.60);
+INSERT INTO products VALUES(21, 'FINE TOFU SOYA KING 835GM X 6', 'FZ', 30, 25.15);
+INSERT INTO products VALUES(22, 'SCALLOP 20/30 2KG', 'FZ', 34, 25.30);
+INSERT INTO products VALUES(23, 'ROASTED DUCK BREAST', 'FZ', 38, 21.80);
+INSERT INTO products VALUES(24, 'CHICKEN BREAST FILLET 2KG', 'FZ', 29, 34.90);
+INSERT INTO products VALUES(25, 'FILAMENT CRAB STICK 18CM KF 1KG', 'FZ', 47, 25.60);
+
+CREATE TABLE productlines
+(
+    productNo   INTEGER NOT NULL, --Foreign
+    quantity  INTEGER NOT NULL,
+    orderNo  INTEGER NOT NULL, --Foreign
+    
+    CONSTRAINT productlinesPK PRIMARY KEY (productNo, orderNo),
+    
+    CONSTRAINT productlinesFK_prod FOREIGN KEY (productNo) REFERENCES products,
+    CONSTRAINT productlinesFK_ord FOREIGN KEY (orderNo) REFERENCES orders ON DELETE CASCADE
+    
+);
+
+INSERT INTO productlines VALUES( 17, 4, 3);
+INSERT INTO productlines VALUES( 6, 7, 9);
+INSERT INTO productlines VALUES( 2, 2, 2);
+INSERT INTO productlines VALUES( 23, 4, 4);
+INSERT INTO productlines VALUES( 3, 9, 7);
+INSERT INTO productlines VALUES( 2, 10, 3);
+INSERT INTO productlines VALUES( 6, 7, 16);
+INSERT INTO productlines VALUES( 24, 6, 12);
+INSERT INTO productlines VALUES( 4, 7, 5);
+INSERT INTO productlines VALUES( 23, 4, 6);
+INSERT INTO productlines VALUES( 13, 7, 19);
+INSERT INTO productlines VALUES( 23, 1, 7);
+INSERT INTO productlines VALUES( 12, 10, 16);
+INSERT INTO productlines VALUES( 22, 6, 11);
+INSERT INTO productlines VALUES( 10, 1, 9);
+INSERT INTO productlines VALUES(  8, 4, 8);
+INSERT INTO productlines VALUES( 8, 5, 14);
+INSERT INTO productlines VALUES( 20, 2, 6);
+INSERT INTO productlines VALUES( 23, 10, 1);
+INSERT INTO productlines VALUES( 7, 7, 1);
+INSERT INTO productlines VALUES( 24, 5, 6);
+INSERT INTO productlines VALUES( 14, 10, 1);
+INSERT INTO productlines VALUES( 23, 5, 13);
+INSERT INTO productlines VALUES( 8, 1, 3);
+INSERT INTO productlines VALUES( 1, 10, 16);
+INSERT INTO productlines VALUES( 12, 6, 8);
+INSERT INTO productlines VALUES( 2, 1, 19);
+INSERT INTO productlines VALUES( 16, 1, 13);
+INSERT INTO productlines VALUES( 14, 3, 19);
+INSERT INTO productlines VALUES( 1, 2, 5);
+INSERT INTO productlines VALUES( 14, 8, 3);
+INSERT INTO productlines VALUES( 25, 6, 7);
+INSERT INTO productlines VALUES( 10, 4, 15);
+INSERT INTO productlines VALUES( 19, 10, 14);
+INSERT INTO productlines VALUES( 20, 5, 3);
+INSERT INTO productlines VALUES( 8, 6, 18);
+INSERT INTO productlines VALUES( 4, 7, 15);
+INSERT INTO productlines VALUES( 10, 6, 2);
+INSERT INTO productlines VALUES( 14, 10, 16);
+INSERT INTO productlines VALUES( 25, 5, 19);
+INSERT INTO productlines VALUES( 8, 2, 16);
+INSERT INTO productlines VALUES( 2, 9, 5);
+INSERT INTO productlines VALUES( 23, 6, 10);
+INSERT INTO productlines VALUES( 16, 5, 6);
+INSERT INTO productlines VALUES( 24, 10, 2);
+INSERT INTO productlines VALUES( 18, 8, 10);
+INSERT INTO productlines VALUES( 20, 5, 2);
+INSERT INTO productlines VALUES( 1, 10, 3);
+INSERT INTO productlines VALUES( 2, 4, 4);
+INSERT INTO productlines VALUES( 1, 6, 13);
+
+
+CREATE TABLE  staffs
+(
+    staffNo   INTEGER NOT NULL,
+    staffName TEXT NOT NULL,
+    role  VARCHAR(255) NOT NULL,
+    staffTel VARCHAR(20) NOT NULL,  --Check
+    staffEmail TEXT,                --Check
+    saleNo   INTEGER NOT NULL,
+    truckNo  INTEGER ,      --Foreign
+    
+    CONSTRAINT staffsPK PRIMARY KEY (staffNo),
+    
+    CONSTRAINT staffsFK_truck FOREIGN KEY (truckNo) REFERENCES trucks,
+    
+    CONSTRAINT di_table_staffs_staffTel CHECK (
+                staffTel ~ '^\d{2}-\d{4}-\d{4}$'), -- Regular Expression
+                
+    CONSTRAINT di_table_staffs_staffEmail CHECK (
+                staffEmail LIKE '%@sfs.com')
+);
+
+INSERT INTO staffs VALUES(1, 'Willow Mccullough', 'driver','04-5219-1929','Willow.Mc@sfs.com',1,1);
+INSERT INTO staffs VALUES(2, 'Alexander O-Moore', 'driver','08-1960-5149','Alexander.Om@sfs.com',1,1);
+INSERT INTO staffs VALUES(3, 'Ruairi Rhodes', 'salestaff','06-0101-1214','Ruairi.Rh@sfs.com',1,NULL);
+INSERT INTO staffs VALUES(4, 'Kaleb Copeland', 'driver','06-7874-4311','Kaleb.Co@sfs.com',2,2);
+INSERT INTO staffs VALUES(5, 'Fern Campbell', 'salestaff','01-5920-9170','Fern.Ca@sfs.com',2,NULL);
+INSERT INTO staffs VALUES(6, 'Anaya Woodward', 'salestaff','01-8342-9446','Anaya.Wo@sfs.com',3,NULL);
+INSERT INTO staffs VALUES(7, 'Zac Mcmahon', 'driver','07-7939-5804','Zac.Mc@sfs.com',2,2);
+INSERT INTO staffs VALUES(8, 'Earl Bailey', 'driver','05-0702-0594','Earl.Ba@sfs.com',3,3);
+INSERT INTO staffs VALUES(9, 'Andy Johnston', 'driver','09-1523-6953','Andy.Jo@sfs.com',3,3);
+INSERT INTO staffs VALUES(10, 'Kaitlin Mayer', 'salestaff','05-2515-0757','Kaitlin.Ma@sfs.com',4,NULL);
+INSERT INTO staffs VALUES(11, 'Zaara Conway', 'salestaff','06-6469-5822','Zaara.Co@sfs.com',5,NULL);
+INSERT INTO staffs VALUES(12, 'Nadine Hahn', 'salestaff','05-6436-0522','Nadine.Ha@sfs.com',6,NULL);
+INSERT INTO staffs VALUES(13, 'Mollie Pace', 'salestaff','03-4237-1518','Mollie.Pa@sfs.com',7,NULL);
+INSERT INTO staffs VALUES(14, 'Qasim Hodges', 'driver','09-4916-3588','Qasim.Ho@sfs.com',4,4);
+INSERT INTO staffs VALUES(15, 'Amin Oconnor', 'driver','06-6936-8228','Amin.Oc@sfs.com',4,4);
+INSERT INTO staffs VALUES(16, 'Anais Schultz', 'driver','03-5183-6709','Anais.Sc@sfs.com',5,5);
+INSERT INTO staffs VALUES(17, 'Marc Todd', 'driver','01-3476-5281','Marc.To@sfs.com',5,5);
+INSERT INTO staffs VALUES(18, 'Theodore Roman', 'driver','03-2624-8600','Theodore.Ro@sfs.com',6,6);
+INSERT INTO staffs VALUES(19, 'Otto Hall', 'driver','02-7233-7902','Otto.Ha@sfs.com',6,6);
+INSERT INTO staffs VALUES(20, 'Bill Solis', 'driver','06-5858-5755','Bill.So@sfs.com',7,7);
+INSERT INTO staffs VALUES(21, 'Cassie Schroeder', 'salestaff','09-3246-3356','Cassie.Sc@sfs.com',8,NULL);
+INSERT INTO staffs VALUES(22, 'Kane Rose', 'driver','06-7699-6258','Kane.Ro@sfs.com',7,7);
+INSERT INTO staffs VALUES(23, 'Gina Russell', 'salestaff','05-5175-0010','Gina.Ru@sfs.com',9,NULL);
+INSERT INTO staffs VALUES(24, 'Maja Vaughn', 'driver','04-5850-1952','Maja.Va@sfs.com',8,8);
+INSERT INTO staffs VALUES(25, 'Lilia Sykes', 'salestaff','06-8929-2944','Lilia.Sy@sfs.com',10,NULL);
+INSERT INTO staffs VALUES(26, 'Abubakar Newton', 'driver','06-8225-2584','Abubakar.Ne@sfs.com',8,8);
+INSERT INTO staffs VALUES(27, 'Brett Patton', 'driver','05-8924-7644','Brett.Pa@sfs.com',9,9);
+INSERT INTO staffs VALUES(28, 'Rafael Wolf', 'driver','08-8929-2397','Rafael.Wo@sfs.com',9,9);
+INSERT INTO staffs VALUES(29, 'Aiden Richardson', 'driver','03-4635-8707','Aiden.Ri@sfs.com',10,10);
+INSERT INTO staffs VALUES(30, 'Benjamin Dorsey', 'driver','06-2534-7986','Benjamin.Do@sfs.com',10,10);
+
+CREATE TABLE  suppliers
+(
+    supplierNo   INTEGER NOT NULL,
+    companyName  TEXT NOT NULL,
+    companyTel   VARCHAR(20) NOT NULL,
+    companyEmail TEXT,
+    
+    
+    CONSTRAINT suppliesPK PRIMARY KEY (supplierNo),
+    
+    CONSTRAINT di_table_suppliers_companyTel CHECK (
+               companyTel ~ '^\d{2}-\d{4}-\d{4}'), -- Regular Expression
+               
+    CONSTRAINT di_table_suppliers_companyEmail CHECK (
+                companyEmail LIKE '%@%')
+);
+
+INSERT INTO suppliers VALUES(1, 'FOOD2U', '02-4951-3526', 'contact@FOOD2U.com');
+INSERT INTO suppliers VALUES(2, 'ASIAFOODMART', '02-9837-4411', 'contact@ASIAFOODMART.com');
+INSERT INTO suppliers VALUES(3, 'NATURALCUISINE', '02-9570-5577', 'contact@NATURALCUISINE.com');
+INSERT INTO suppliers VALUES(4, 'MARKETMUNCH', '02-9251-4044', 'contact@MARKETMUNCH.com');
+INSERT INTO suppliers VALUES(5, 'WOODLANDCUISINE', '02-9809-3181', 'contact@WOODLANDCUISINE.com');
+INSERT INTO suppliers VALUES(6, 'GOODFRESH', '02-9984-9101', 'contact@GOODFRESH.com');
+INSERT INTO suppliers VALUES(7, 'CHEFSCHOICE', '02-9938-1444', 'contact@CHEFSCHOICE.com');
+INSERT INTO suppliers VALUES(8, 'TRUETASTE', '02-9808-6333', 'contact@TRUETASTE.com');
+INSERT INTO suppliers VALUES(9, 'HEALTHYCHOICE', '02-9281-2668', 'contact@HEALTHYCHOICE.com');
+INSERT INTO suppliers VALUES(10, 'FARMSOURCE', '02-8904-1255', 'contact@FARMSOURCE.com');
+
+
+CREATE TABLE  supplylist
+(
+    supplierNo  INTEGER NOT NULL, --Foreign
+    productNo    INTEGER NOT NULL, --Foreign
+    quantitySupply INTEGER NOT NULL,
+    callDate     date NOT NULL,
+    receiveDate  date NOT NULL,
+    supplyUnitPrice decimal(10, 2) NOT NULL,
+    
+    CONSTRAINT supplylistPK PRIMARY KEY (supplierNo, productNo),
+    
+    CONSTRAINT supplylistFK_supp FOREIGN KEY (supplierNo) REFERENCES suppliers,
+    CONSTRAINT supplylistFK_prod FOREIGN KEY (productNo) REFERENCES products
+);
+
+ALTER TABLE supplylist
+ADD totalPriceSupply decimal(10,2);
+
+INSERT INTO supplylist VALUES( 1, 4, 31, '2024-04-26','2024-04-29',35.30);
+INSERT INTO supplylist VALUES( 3, 16, 42, '2024-04-26','2024-04-30',40.20);
+INSERT INTO supplylist VALUES( 8, 21, 48, '2024-04-29','2024-05-01',23.50);
+INSERT INTO supplylist VALUES( 4, 19, 47, '2024-05-01','2024-05-02',61.85);
+INSERT INTO supplylist VALUES( 7, 10, 33, '2024-05-01','2024-05-03',30.75);
+INSERT INTO supplylist VALUES( 4, 3, 37, '2024-05-02','2024-05-03',36.50);
+INSERT INTO supplylist VALUES( 3, 12, 40, '2024-05-02','2024-05-06',22.45);
+INSERT INTO supplylist VALUES( 7, 20, 39, '2024-05-03','2024-05-06',40.70);
+INSERT INTO supplylist VALUES( 8, 3, 50, '2024-05-06','2024-05-07',36.50);
+INSERT INTO supplylist VALUES( 4, 1, 36, '2024-05-06','2024-05-08',78.45);
+
+UPDATE supplylist
+SET totalPriceSupply = quantitySupply * supplyUnitPrice ; --Calculate totalPrice
+
+
+CREATE view orderlist
+
+(invoiceNo, name, qty, price, total, run) AS SELECT orderNo, productName, quantity, unitPrice, 
+quantity * unitPrice AS totalPrice, runNo 
+from orders natural join productlines natural join products
+order by orderNo
+;
+
+
+CREATE view driverlist
+
+(truck, license, trucksize, driver, contact, run ) AS SELECT truckNo, licensePlate, size ,staffName, staffTel, runNo 
+from trucks natural join staffs natural join runs
+;
+
+
+
+
+
+
